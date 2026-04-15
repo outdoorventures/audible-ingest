@@ -149,13 +149,18 @@ def download_aax(asin: str) -> Path:
     env = os.environ.copy()
     env["AUDIBLE_CONFIG_DIR"] = str(CONFIG_DIR)
 
-    audible_cli = shutil.which("audible") or str(Path(sys.executable).parent / "audible")
+    # Use the audible-cli that ships in our venv (next to the running python).
+    audible_cli = str(Path(sys.executable).parent / "audible")
+    if not Path(audible_cli).exists():
+        audible_cli = shutil.which("audible") or "audible"
     cmd = [
-        audible_cli, "download",
+        audible_cli,
+        "-v", "ERROR",       # quiet logging (top-level flag, before subcommand)
+        "download",
         "--asin", asin,
         "--aax-fallback",
         "--output-dir", str(dest),
-        "--quiet",
+        "--no-confirm",      # don't prompt
     ]
     print(f">> Downloading AAX for {asin}...")
     result = subprocess.run(cmd, env=env, capture_output=True, text=True)
